@@ -5,8 +5,8 @@ from datetime import datetime
 import sqlalchemy as sql
 from sqlalchemy import orm
 
-from utils import parse_tablename
-from schemas import ScoreTypeEnum
+from ..utils import parse_tablename
+from ..schemas import ScoreTypeEnum
 
 
 class Base(orm.DeclarativeBase):
@@ -41,7 +41,9 @@ class ScoreEntry(Base, CreatedAtMixin):
     judge_id: orm.Mapped[int] = orm.mapped_column(sql.ForeignKey("students.id"))
     amount: orm.Mapped[int]
     score_type: orm.Mapped[ScoreTypeEnum]
-    comment_id: orm.Mapped[int | None]
+    comment_id: orm.Mapped[int | None] = orm.mapped_column(
+        sql.ForeignKey("comments.id")
+    )
 
     judge: orm.Mapped[Student] = orm.relationship(
         back_populates="judged_scores", foreign_keys=[judge_id]
@@ -50,6 +52,13 @@ class ScoreEntry(Base, CreatedAtMixin):
         back_populates="scores", foreign_keys=[student_id]
     )
     comment: orm.Mapped[Comment | None] = orm.relationship(back_populates="scores")
+
+
+class Comment(Base):
+    comment: orm.Mapped[str]
+    base_amount: orm.Mapped[int | None]
+
+    scores: orm.Mapped[list[ScoreEntry]] = orm.relationship(back_populates="comment")
 
 
 class Student(Base, TimestampMixin):
@@ -65,8 +74,3 @@ class Student(Base, TimestampMixin):
     teaching_groups: orm.Mapped[list[Group]] = orm.relationship(
         back_populates="teacher"
     )
-
-
-class Comment(Base):
-    comment: orm.Mapped[str]
-    base_amount: orm.Mapped[int | None]
