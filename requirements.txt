@@ -1,0 +1,7 @@
+fastapi[all]
+fastapi-crudrouter
+sqlalchemy[async]
+alembic
+asyncpg
+psycopg2
+aiohttp
