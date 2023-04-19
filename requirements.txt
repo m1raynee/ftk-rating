@@ -1,5 +1,5 @@
 fastapi[all]
-fastapi-crudrouter
+fastapi_pagination
 sqlalchemy[async]
 alembic
 asyncpg

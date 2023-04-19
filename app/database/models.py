@@ -25,11 +25,22 @@ class TimestampMixin(CreatedAtMixin):
     updated_at: orm.Mapped[datetime] = orm.mapped_column(server_default=sql.func.now())
 
 
+students_groups_association = sql.Table(
+    "students_to_groups",
+    Base.metadata,
+    sql.Column("group_id", sql.ForeignKey("groups.id"), primary_key=True),
+    sql.Column("student_id", sql.ForeignKey("students.id"), primary_key=True),
+)
+
+
 class Group(Base, TimestampMixin):
     name: orm.Mapped[str]
     teacher_id: orm.Mapped[int] = orm.mapped_column(sql.ForeignKey("students.id"))
 
     teacher: orm.Mapped[Student] = orm.relationship(back_populates="teaching_groups")
+    students: orm.Mapped[list[Student]] = orm.relationship(
+        secondary=students_groups_association, back_populates="groups"
+    )
 
 
 # class Lesson(Base, TimestampMixin):
@@ -73,4 +84,7 @@ class Student(Base, TimestampMixin):
     )
     teaching_groups: orm.Mapped[list[Group]] = orm.relationship(
         back_populates="teacher"
+    )
+    groups: orm.Mapped[list[Group]] = orm.relationship(
+        secondary=students_groups_association, back_populates="students"
     )
