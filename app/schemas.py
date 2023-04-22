@@ -51,6 +51,7 @@ class StudentUpdate(Base):
 class _BaseGroup(Base):
     name: str
     teacher_id: int
+    default_score_type: ScoreTypeEnum
 
 
 class GroupCreate(_BaseGroup):

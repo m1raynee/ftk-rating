@@ -36,25 +36,32 @@ students_groups_association = sql.Table(
 class Group(Base, TimestampMixin):
     name: orm.Mapped[str]
     teacher_id: orm.Mapped[int] = orm.mapped_column(sql.ForeignKey("students.id"))
+    default_score_type: orm.Mapped[ScoreTypeEnum | None]
 
     teacher: orm.Mapped[Student] = orm.relationship(back_populates="teaching_groups")
     students: orm.Mapped[list[Student]] = orm.relationship(
         secondary=students_groups_association, back_populates="groups"
     )
+    lessons: orm.Mapped[list[Lesson]] = orm.relationship(back_populates="group")
 
 
-# class Lesson(Base, TimestampMixin):
-#     ...
+class Lesson(Base, CreatedAtMixin):
+    group_id: orm.Mapped[int] = orm.mapped_column(sql.ForeignKey("groups.id"))
+    starts_at: orm.Mapped[datetime]
+    ends_at: orm.Mapped[datetime]
+    theme: orm.Mapped[str | None]
+
+    group: orm.Mapped[Group] = orm.relationship(back_populates="lessons")
+    scores: orm.Mapped[list[ScoreEntry]] = orm.relationship(back_populates="lesson")
 
 
 class ScoreEntry(Base, CreatedAtMixin):
     student_id: orm.Mapped[int] = orm.mapped_column(sql.ForeignKey("students.id"))
     judge_id: orm.Mapped[int] = orm.mapped_column(sql.ForeignKey("students.id"))
+    lesson_id: orm.Mapped[int] = orm.mapped_column(sql.ForeignKey("lessons.id"))
     amount: orm.Mapped[int]
     score_type: orm.Mapped[ScoreTypeEnum]
-    comment_id: orm.Mapped[int | None] = orm.mapped_column(
-        sql.ForeignKey("comments.id")
-    )
+    event_id: orm.Mapped[int | None] = orm.mapped_column(sql.ForeignKey("events.id"))
 
     judge: orm.Mapped[Student] = orm.relationship(
         back_populates="judged_scores", foreign_keys=[judge_id]
@@ -62,10 +69,11 @@ class ScoreEntry(Base, CreatedAtMixin):
     student: orm.Mapped[Student] = orm.relationship(
         back_populates="scores", foreign_keys=[student_id]
     )
-    comment: orm.Mapped[Comment | None] = orm.relationship(back_populates="scores")
+    lesson: orm.Mapped[Lesson] = orm.relationship(back_populates="scores")
+    event: orm.Mapped[Event | None] = orm.relationship(back_populates="scores")
 
 
-class Comment(Base):
+class Event(Base):
     comment: orm.Mapped[str]
     base_amount: orm.Mapped[int | None]
 

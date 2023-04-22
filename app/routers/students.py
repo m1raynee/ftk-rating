@@ -13,7 +13,7 @@ router = APIRouter(prefix="/students")
 @router.get("/", response_model=Page[StudentOut])
 @router.get("/limit-offset", response_model=LimitOffsetPage[StudentOut])
 async def get_all_students(db: dep.DB):
-    return await paginate(db, sql.select(Student), params=params)
+    return await paginate(db, sql.select(Student))
 
 
 @router.post("/", response_model=StudentOut)
