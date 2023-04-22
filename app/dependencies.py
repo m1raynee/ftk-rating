@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status, Path
 import sqlalchemy as sql
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .database import session_factory, Student, Group, Base
+from .database import session_factory, Student, Group, Base, Lesson
 
 
 async def get_db():
@@ -56,5 +56,7 @@ class _ExistsDependency:
 
     Student = Annotated[int, Depends(build_dependency(Student, "student"))]
     Group = Annotated[int, Depends(build_dependency(Group, "group"))]
+    Lesson = Annotated[int, Depends(build_dependency(Lesson, "group"))]
+
 
 exists = _ExistsDependency()

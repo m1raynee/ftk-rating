@@ -1,18 +1,25 @@
 from fastapi import APIRouter, status, HTTPException, Response
-from fastapi_pagination import Page, LimitOffsetPage
+from fastapi_pagination import Page
 from fastapi_pagination.ext.async_sqlalchemy import paginate
 import sqlalchemy as sql
 
-from ..database import Group, Student, students_groups_association
-from ..schemas import GroupCreate, GroupOut, GroupUpdate, StudentOut
+from ..database import Group, Student, students_groups_association, Lesson
+from ..schemas import (
+    GroupCreate,
+    GroupOut,
+    GroupUpdate,
+    StudentOut,
+    LessonCreate,
+    LessonOut,
+    LessonUpdate,
+)
 from .. import dependencies as dep
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
 
 @router.get("/", response_model=Page[GroupOut])
-@router.get("/limit-offset", response_model=LimitOffsetPage[GroupOut])
-async def get_all_students(db: dep.DB):
+async def get_all_groups(db: dep.DB):
     return await paginate(db, sql.select(Group))
 
 
@@ -64,3 +71,38 @@ async def add_student_to_group(
         {"detail": "Student added to the group"},
         status.HTTP_201_CREATED,
     )
+
+
+@router.get("/{group_id}/lessons", response_model=Page[LessonOut])
+async def get_all_group_lessons(group: dep.exists.Group, db: dep.DB):
+    return paginate(db, sql.select(Lesson).where(Lesson.group_id == group))
+
+
+@router.post("/{group_id}/lessons", response_model=LessonOut)
+async def create_group_lesson(
+    group: dep.exists.Group, schema: LessonCreate, db: dep.DB
+):
+    resp = await db.execute(
+        sql.insert(Lesson).values(**schema.dict(), group_id=group).returning(Lesson)
+    )
+    return resp.scalar()
+
+
+@router.patch("/{group_id}/lessons/{lesson_id}", response_model=LessonOut)
+async def update_group_lesson(
+    group: dep.exists.Group, lesson: dep.exists.Lesson, schema: LessonUpdate, db: dep.DB
+):
+    new_lesson = (
+        await db.execute(
+            sql.update(Lesson)
+            .where(Lesson.group_id == group & Lesson.id == lesson)
+            .values(**schema.dict())
+            .returning(Lesson)
+        )
+    ).scalar()
+    if new_lesson is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            "lesson with such id does not exists in this group",
+        )
+    return new_lesson

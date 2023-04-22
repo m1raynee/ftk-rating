@@ -65,3 +65,25 @@ class GroupOut(_BaseGroup, TimestampMixin):
 class GroupUpdate(Base):
     name: str
     teacher_id: int
+
+
+class _LessonBase(Base):
+    group_id: int
+    starts_at: datetime
+    ends_at: datetime
+    theme: str | None
+
+
+class LessonCreate(_LessonBase):
+    ...
+
+
+class LessonOut(_LessonBase, CreatedAtMixin):
+    id: int
+
+
+class LessonUpdate(Base):
+    group_id: int | None
+    starts_at: datetime | None
+    ends_at: datetime | None
+    theme: str | None
