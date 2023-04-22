@@ -77,7 +77,7 @@ class Event(Base):
     comment: orm.Mapped[str]
     base_amount: orm.Mapped[int | None]
 
-    scores: orm.Mapped[list[ScoreEntry]] = orm.relationship(back_populates="comment")
+    scores: orm.Mapped[list[ScoreEntry]] = orm.relationship(back_populates="event")
 
 
 class Student(Base, TimestampMixin):

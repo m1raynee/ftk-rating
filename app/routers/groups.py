@@ -7,7 +7,7 @@ from ..database import Group, Student, students_groups_association
 from ..schemas import GroupCreate, GroupOut, GroupUpdate, StudentOut
 from .. import dependencies as dep
 
-router = APIRouter(prefix="/groups")
+router = APIRouter(prefix="/groups", tags=["groups"])
 
 
 @router.get("/", response_model=Page[GroupOut])
