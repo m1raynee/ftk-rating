@@ -56,7 +56,7 @@ class _ExistsDependency:
 
     Student = Annotated[int, Depends(build_dependency(Student, "student"))]
     Group = Annotated[int, Depends(build_dependency(Group, "group"))]
-    Lesson = Annotated[int, Depends(build_dependency(Lesson, "group"))]
+    Lesson = Annotated[int, Depends(build_dependency(Lesson, "lesson"))]
 
 
 exists = _ExistsDependency()

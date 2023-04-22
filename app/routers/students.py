@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from fastapi_pagination import Page, LimitOffsetPage
+from fastapi_pagination import Page
 from fastapi_pagination.ext.async_sqlalchemy import paginate
 import sqlalchemy as sql
 
@@ -11,7 +11,6 @@ router = APIRouter(prefix="/students", tags=["students"])
 
 
 @router.get("/", response_model=Page[StudentOut])
-@router.get("/limit-offset", response_model=LimitOffsetPage[StudentOut])
 async def get_all_students(db: dep.DB):
     return await paginate(db, sql.select(Student))
 

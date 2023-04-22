@@ -1,19 +1,17 @@
-from fastapi import APIRouter, status, HTTPException, Response
+from fastapi import APIRouter, status, Response
 from fastapi_pagination import Page
 from fastapi_pagination.ext.async_sqlalchemy import paginate
 import sqlalchemy as sql
 
-from ..database import Group, Student, students_groups_association, Lesson
+from ..database import Group, Student, students_groups_association
 from ..schemas import (
     GroupCreate,
     GroupOut,
     GroupUpdate,
     StudentOut,
-    LessonCreate,
-    LessonOut,
-    LessonUpdate,
 )
 from .. import dependencies as dep
+from . import lessons
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 
@@ -29,7 +27,10 @@ async def create_group(schema: GroupCreate, db: dep.DB):
     return resp.scalar()
 
 
-@router.patch("/{group_id}", response_model=GroupOut)
+group_router = APIRouter()
+
+
+@group_router.patch("/", response_model=GroupOut)
 async def update_group(group: dep.exists.Group, schema: GroupUpdate, db: dep.DB):
     resp = await db.execute(
         sql.update(Group)
@@ -40,7 +41,7 @@ async def update_group(group: dep.exists.Group, schema: GroupUpdate, db: dep.DB)
     return resp.scalar()
 
 
-@router.get("/{group_id}/students", response_model=list[StudentOut])
+@group_router.get("/students", response_model=list[StudentOut])
 async def get_group_students(group: dep.exists.Group, db: dep.DB):
     resp = await db.execute(
         sql.select(Student).where(Student.groups.any(Group.id == group))
@@ -48,7 +49,7 @@ async def get_group_students(group: dep.exists.Group, db: dep.DB):
     return resp.scalars().all()
 
 
-@router.put("/{group_id}/students/{student_id}")
+@group_router.put("/students/{student_id}")
 async def add_student_to_group(
     group: dep.exists.Group, student: dep.exists.Student, db: dep.DB
 ):
@@ -73,36 +74,5 @@ async def add_student_to_group(
     )
 
 
-@router.get("/{group_id}/lessons", response_model=Page[LessonOut])
-async def get_all_group_lessons(group: dep.exists.Group, db: dep.DB):
-    return paginate(db, sql.select(Lesson).where(Lesson.group_id == group))
-
-
-@router.post("/{group_id}/lessons", response_model=LessonOut)
-async def create_group_lesson(
-    group: dep.exists.Group, schema: LessonCreate, db: dep.DB
-):
-    resp = await db.execute(
-        sql.insert(Lesson).values(**schema.dict(), group_id=group).returning(Lesson)
-    )
-    return resp.scalar()
-
-
-@router.patch("/{group_id}/lessons/{lesson_id}", response_model=LessonOut)
-async def update_group_lesson(
-    group: dep.exists.Group, lesson: dep.exists.Lesson, schema: LessonUpdate, db: dep.DB
-):
-    new_lesson = (
-        await db.execute(
-            sql.update(Lesson)
-            .where(Lesson.group_id == group & Lesson.id == lesson)
-            .values(**schema.dict())
-            .returning(Lesson)
-        )
-    ).scalar()
-    if new_lesson is None:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            "lesson with such id does not exists in this group",
-        )
-    return new_lesson
+group_router.include_router(lessons.router, prefix="/lessons", tags=["lessons"])
+router.include_router(group_router, prefix="/{group_id}")
