@@ -17,16 +17,16 @@ async def get_all_students(db: dep.DB):
 
 
 @router.post("/", response_model=GroupOut)
-async def create_student(schema: GroupCreate, db: dep.DB):
+async def create_group(schema: GroupCreate, db: dep.DB):
     resp = await db.execute(sql.insert(Group).values(**schema.dict()).returning(Group))
     return resp.scalar()
 
 
 @router.patch("/{group_id}", response_model=GroupOut)
-async def update_student(student_id: int, schema: GroupUpdate, db: dep.DB):
+async def update_group(group: dep.exists.Group, schema: GroupUpdate, db: dep.DB):
     resp = await db.execute(
         sql.update(Group)
-        .where(Group.id == student_id)
+        .where(Group.id == group)
         .values(**schema.dict(exclude_unset=True))
         .returning(Group)
     )
@@ -34,21 +34,21 @@ async def update_student(student_id: int, schema: GroupUpdate, db: dep.DB):
 
 
 @router.get("/{group_id}/students", response_model=list[StudentOut])
-async def get_group_students(group_id: int, db: dep.DB):
+async def get_group_students(group: dep.exists.Group, db: dep.DB):
     resp = await db.execute(
-        sql.select(Student).where(Student.groups.any(Group.id == group_id))
+        sql.select(Student).where(Student.groups.any(Group.id == group))
     )
     return resp.scalars().all()
 
 
 @router.put("/{group_id}/students/{student_id}")
 async def add_student_to_group(
-    group: dep.model.Group, student: dep.model.Student, db: dep.DB
+    group: dep.exists.Group, student: dep.exists.Student, db: dep.DB
 ):
     if await db.execute(
         sql.select(Student)
-        .where(Student.groups.any(Group.id == group.id))
-        .where(Student.id == student.id)
+        .where(Student.groups.any(Group.id == group))
+        .where(Student.id == student)
     ):
         return Response(
             {"detail": "Student already in the group"},
@@ -57,7 +57,7 @@ async def add_student_to_group(
 
     await db.execute(
         sql.insert(students_groups_association).values(
-            group_id=group.id, student_id=student.id
+            group_id=group, student_id=student
         )
     )
     return Response(

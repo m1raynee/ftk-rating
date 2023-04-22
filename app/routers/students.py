@@ -25,10 +25,12 @@ async def create_student(schema: StudentCreate, db: dep.DB):
 
 
 @router.patch("/{student_id}", response_model=StudentOut)
-async def update_student(student: dep.model.Student, schema: StudentUpdate, db: dep.DB):
+async def update_student(
+    student: dep.exists.Student, schema: StudentUpdate, db: dep.DB
+):
     resp = await db.execute(
         sql.update(Student)
-        .where(Student.id == student.id)
+        .where(Student.id == student)
         .values(**schema.dict(exclude_unset=True), updated_at=sql.func.now())
         .returning(Student)
     )

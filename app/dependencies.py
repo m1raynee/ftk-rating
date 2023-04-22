@@ -38,3 +38,23 @@ class _ModelDependency:
 
 
 model = _ModelDependency()
+
+
+class _ExistsDependency:
+    def build_dependency(db_model: Base, name: str):
+        async def generated(item_id: Annotated[int, Path(alias=name + "_id")], db: DB):
+            item = (
+                await db.execute(sql.select(db_model.id).where(db_model.id == item_id))
+            ).scalar()
+            if item is None:
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND, f"{name} with such id does not exists"
+                )
+            return item
+
+        return generated
+
+    Student = Annotated[int, Depends(build_dependency(Student, "student"))]
+    Group = Annotated[int, Depends(build_dependency(Group, "group"))]
+
+exists = _ExistsDependency()
