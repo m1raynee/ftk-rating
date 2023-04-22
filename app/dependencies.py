@@ -1,10 +1,10 @@
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Path
 import sqlalchemy as sql
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .database import session_factory, Student, Group
+from .database import session_factory, Student, Group, Base
 
 
 async def get_db():
@@ -20,28 +20,21 @@ DB = Annotated[AsyncSession, Depends(get_db)]
 
 
 class _ModelDependency:
-    async def get_student(student_id: int, db: DB):
-        student = (
-            await db.execute(sql.select(Student).where(Student.id == student_id))
-        ).scalar()
-        if student is None:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND, "student with such id does not exists"
-            )
-        return student
+    def build_dependency(db_model: Base, name: str):
+        async def generated(item_id: Annotated[int, Path(alias=name + "_id")], db: DB):
+            item = (
+                await db.execute(sql.select(db_model).where(db_model.id == item_id))
+            ).scalar()
+            if item is None:
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND, f"{name} with such id does not exists"
+                )
+            return item
 
-    async def get_group(group_id: int, db: DB):
-        group = (
-            await db.execute(sql.select(Group).where(Group.id == group_id))
-        ).scalar()
-        if group is None:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND, "group with such id does not exists"
-            )
-        return group
+        return generated
 
-    Student = Annotated[Student, Depends(get_student)]
-    Group = Annotated[Group, Depends(get_group)]
+    Student = Annotated[Student, Depends(build_dependency(Student, "student"))]
+    Group = Annotated[Group, Depends(build_dependency(Group, "group"))]
 
 
 model = _ModelDependency()
