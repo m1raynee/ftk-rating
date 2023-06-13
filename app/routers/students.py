@@ -6,6 +6,7 @@ import sqlalchemy as sql
 from ..database import Student
 from ..schemas import StudentCreate, StudentOut, StudentUpdate
 from .. import dependencies as dep
+from . import scores
 
 router = APIRouter(prefix="/students", tags=["students"])
 
@@ -34,3 +35,6 @@ async def update_student(
         .returning(Student)
     )
     return resp.scalar()
+
+
+router.include_router(scores.student_router, prefix="/{student_id}/scores")

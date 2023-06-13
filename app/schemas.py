@@ -67,18 +67,18 @@ class GroupUpdate(Base):
     teacher_id: int
 
 
-class _LessonBase(Base):
+class _BaseLesson(Base):
     group_id: int
     starts_at: datetime
     ends_at: datetime
     theme: str | None
 
 
-class LessonCreate(_LessonBase):
+class LessonCreate(_BaseLesson):
     ...
 
 
-class LessonOut(_LessonBase, CreatedAtMixin):
+class LessonOut(_BaseLesson, CreatedAtMixin):
     id: int
 
 
@@ -87,3 +87,29 @@ class LessonUpdate(Base):
     starts_at: datetime | None
     ends_at: datetime | None
     theme: str | None
+
+
+class _BaseScoreEntry(Base):
+    student_id: int
+    judge_id: int
+    lesson_id: int
+    amount: int
+    score_type: ScoreTypeEnum
+    event_id: int
+
+
+class ScoreEntryCreate(_BaseScoreEntry):
+    ...
+
+
+class ScoreEntryOut(_BaseScoreEntry, CreatedAtMixin):
+    id: int
+
+
+class ScoreEntryUpdate(Base):
+    student_id: int | None
+    judge_id: int | None
+    lesson_id: int | None
+    amount: int | None
+    score_type: ScoreTypeEnum | None
+    event_id: int | None
